@@ -1,25 +1,20 @@
+"""
+Configuration settings for the tender scraper
+"""
 import os
 
 # Base URL
 BASE_URL = "https://tender.nprocure.com"
 
-# API Endpoints
+# API Endpoints (discovered from network inspection)
 TENDER_LIST_ENDPOINT = "/beforeLoginTenderTableList"
-# Note: Some APIs require the full path if BASE_URL isn't automatically prepended
-# TENDER_LIST_URL = "https://tender.nprocure.com/beforeLoginTenderTableList"
+TENDER_DETAIL_ENDPOINT = "/tender/"
 
-# Default API Payload (Update these based on your "Payload" tab in DevTools)
-DEFAULT_PAYLOAD = {
-    "page": 1,
-    "size": 10,
-    "search": ""
-}
-
-# Rate limiting
-RATE_LIMIT = float(os.getenv("RATE_LIMIT", "1.0")) 
+# Rate limiting (requests per second)
+RATE_LIMIT = float(os.getenv("RATE_LIMIT", "1.0"))  # 1 request per second
 
 # Concurrency
-CONCURRENCY = int(os.getenv("CONCURRENCY", "2")) 
+CONCURRENCY = int(os.getenv("CONCURRENCY", "2"))  # 2 concurrent requests
 
 # Retry settings
 MAX_RETRIES = int(os.getenv("RETRIES", "3"))
@@ -32,9 +27,11 @@ METADATA_DB = os.getenv("METADATA_DB", "metadata/runs_metadata.db")
 # User Agent
 USER_AGENT = os.getenv(
     "USER_AGENT",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 )
 
-# Ensure output directories exist
-os.makedirs("output", exist_ok=True)
-os.makedirs("metadata", exist_ok=True)
+# Scraper version
+SCRAPER_VERSION = "1.0.0"
+
+# Default limit for demo runs
+DEFAULT_LIMIT = 50
