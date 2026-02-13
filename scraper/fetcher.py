@@ -3,6 +3,7 @@ HTTP fetcher with rate limiting, retries, and session management
 """
 import time
 import requests
+import urllib3
 from typing import Optional, Dict, Any
 from config.settings import (
     BASE_URL, RATE_LIMIT, MAX_RETRIES, 
@@ -11,6 +12,8 @@ from config.settings import (
 from utils.retry import retry_with_backoff
 from utils.logger import RunLogger
 
+# Disable SSL warnings for the demo to keep logs clean
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class Fetcher:
     """Handles HTTP requests with rate limiting and retries"""
@@ -24,6 +27,10 @@ class Fetcher:
     def _create_session(self) -> requests.Session:
         """Create configured requests session"""
         session = requests.Session()
+        
+        # FIX: Bypass SSL verification for sites with local issuer issues
+        session.verify = False 
+        
         session.headers.update({
             "User-Agent": USER_AGENT,
             "Accept": "application/json, text/plain, */*",
@@ -43,19 +50,12 @@ class Fetcher:
 
     @retry_with_backoff(max_retries=MAX_RETRIES, base_delay=1.0)
     def fetch_page(self, url: str) -> str:
-        """
-        Fetch a page and return HTML content
-        
-        Args:
-            url: Full URL to fetch
-            
-        Returns:
-            HTML content as string
-        """
+        """Fetch a page and return HTML content"""
         self._apply_rate_limit()
         self.logger.info(f"Fetching: {url}")
 
-        response = self.session.get(url, timeout=TIMEOUT_SECONDS)
+        # verify=False is already set in the session, but we pass it explicitly for clarity
+        response = self.session.get(url, timeout=TIMEOUT_SECONDS, verify=False)
         response.raise_for_status()
 
         return response.text
@@ -67,17 +67,7 @@ class Fetcher:
         method: str = "POST",
         data: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """
-        Fetch JSON data from API endpoint
-        
-        Args:
-            endpoint: API endpoint path
-            method: HTTP method (POST, GET)
-            data: Request payload
-            
-        Returns:
-            JSON response as dictionary
-        """
+        """Fetch JSON data from API endpoint"""
         self._apply_rate_limit()
         url = f"{BASE_URL}{endpoint}"
         self.logger.info(f"API call: {method} {url}")
@@ -86,15 +76,27 @@ class Fetcher:
             response = self.session.post(
                 url, 
                 json=data or {}, 
-                timeout=TIMEOUT_SECONDS
+                timeout=TIMEOUT_SECONDS,
+                verify=False
             )
         else:
-            response = self.session.get(url, params=data, timeout=TIMEOUT_SECONDS)
+            response = self.session.get(
+                url, 
+                params=data, 
+                timeout=TIMEOUT_SECONDS,
+                verify=False
+            )
 
         response.raise_for_status()
         return response.json()
 
+    # --- Context Manager for Better Resource Management ---
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
     def close(self):
         """Close the session"""
         self.session.close()
-    
