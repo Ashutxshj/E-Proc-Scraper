@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-"""
-Tender Scraper CLI Entrypoint
-
-Usage:
-    python scrape.py --limit 50 --concurrency 2 --rate-limit 1.0
-"""
 import argparse
 import sys
 from scraper.orchestrator import Orchestrator
@@ -78,7 +71,6 @@ Configuration:
 """)
 
     try:
-        # Create and run orchestrator
         orchestrator = Orchestrator(
             limit=args.limit,
             rate_limit=args.rate_limit,

@@ -1,6 +1,3 @@
-"""
-Parser for extracting tender data from HTML/JSON responses
-"""
 import re
 from typing import List, Dict, Any, Optional
 from bs4 import BeautifulSoup
@@ -8,25 +5,14 @@ from utils.logger import RunLogger
 
 
 class Parser:
-    """Extracts structured tender data from HTML and JSON"""
 
     def __init__(self, logger: RunLogger):
         self.logger = logger
 
     def parse_tender_list_from_html(self, html: str) -> List[Dict[str, Any]]:
-        """
-        Parse tender list from HTML table
-        
-        Args:
-            html: HTML content containing tender table
-            
-        Returns:
-            List of raw tender dictionaries
-        """
         soup = BeautifulSoup(html, 'lxml')
         tenders = []
 
-        # Try multiple table selectors (the site might use different classes)
         table = (
             soup.find('table', class_='dataTable') or
             soup.find('table', class_='table') or
@@ -35,20 +21,17 @@ class Parser:
         
         if not table:
             self.logger.warning("No tender table found in HTML")
-            # Fallback: try to find tender links directly
             return self._parse_from_links(soup)
 
-        # Find all rows - skip header(s)
         all_rows = table.find_all('tr')
         self.logger.info(f"Found {len(all_rows)} total rows in table")
         
-        # Skip first row if it's a header
         rows = all_rows[1:] if len(all_rows) > 1 else all_rows
 
         for idx, row in enumerate(rows):
-            cols = row.find_all(['td', 'th'])  # Some sites use th in body
+            cols = row.find_all(['td', 'th'])  
             
-            if len(cols) < 3:  # Need at least title, org, type
+            if len(cols) < 3:  
                 continue
 
             try:
@@ -67,9 +50,6 @@ class Parser:
         return tenders
 
     def _parse_from_links(self, soup: BeautifulSoup) -> List[Dict[str, Any]]:
-        """
-        Fallback: Parse tenders from any links containing /tender/
-        """
         tenders = []
         tender_links = soup.find_all('a', href=re.compile(r'/tender/\d+'))
         
@@ -118,10 +98,8 @@ class Parser:
         return tenders
 
     def _extract_tender_from_row(self, row, cols) -> Optional[Dict[str, Any]]:
-        """Extract tender data from table row"""
-        # Find link in first few columns
         link = None
-        for col in cols[:3]:  # Check first 3 columns
+        for col in cols[:3]:
             link = col.find('a', href=re.compile(r'/tender/'))
             if link:
                 break
@@ -132,7 +110,6 @@ class Parser:
         title = link.get_text(strip=True)
         href = link.get('href', '')
 
-        # Extract tender ID from URL
         tender_id_match = re.search(r'/tender/(\d+)', href)
         if not tender_id_match:
             return None
@@ -151,9 +128,6 @@ class Parser:
         }
 
     def parse_tender_from_json(self, json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Parse tenders from JSON API response
-        """
         tenders = []
         data_list = json_data.get('data', json_data) if isinstance(json_data, dict) else json_data
 

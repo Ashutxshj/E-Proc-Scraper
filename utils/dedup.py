@@ -1,12 +1,8 @@
-"""
-Deduplication logic for tenders
-"""
 from typing import List, Set
 from models.tender import Tender
 
 
 class TenderDeduplicator:
-    """Handle tender deduplication based on tender_id"""
 
     def __init__(self):
         self.seen_ids: Set[str] = set()
@@ -20,12 +16,6 @@ class TenderDeduplicator:
         self.seen_ids.add(tender.tender_id)
 
     def deduplicate(self, tenders: List[Tender]) -> List[Tender]:
-        """
-        Remove duplicates from a list of tenders
-        
-        Returns:
-            List of unique tenders
-        """
         unique = []
         for tender in tenders:
             if not self.is_duplicate(tender):

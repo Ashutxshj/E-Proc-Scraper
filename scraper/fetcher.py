@@ -1,6 +1,3 @@
-"""
-HTTP fetcher with rate limiting, retries, and session management
-"""
 import time
 import requests
 import urllib3
@@ -17,7 +14,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class Fetcher:
-    """Handles HTTP requests with rate limiting and retries"""
 
     def __init__(self, logger: RunLogger, rate_limit: float = RATE_LIMIT):
         self.logger = logger
@@ -26,7 +22,6 @@ class Fetcher:
         self.session = self._create_session()
 
     def _create_session(self) -> requests.Session:
-        """Create configured requests session"""
         session = requests.Session()
         session.headers.update({
             "User-Agent": USER_AGENT,
@@ -34,12 +29,10 @@ class Fetcher:
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": BASE_URL,
         })
-        # Disable SSL verification (for sites with certificate issues)
         session.verify = False
         return session
 
     def _apply_rate_limit(self):
-        """Apply rate limiting between requests"""
         if self.rate_limit > 0:
             elapsed = time.time() - self.last_request_time
             sleep_time = (1.0 / self.rate_limit) - elapsed
@@ -49,15 +42,6 @@ class Fetcher:
 
     @retry_with_backoff(max_retries=MAX_RETRIES, base_delay=1.0)
     def fetch_page(self, url: str) -> str:
-        """
-        Fetch a page and return HTML content
-        
-        Args:
-            url: Full URL to fetch
-            
-        Returns:
-            HTML content as string
-        """
         self._apply_rate_limit()
         self.logger.info(f"Fetching: {url}")
 
@@ -73,17 +57,6 @@ class Fetcher:
         method: str = "POST",
         data: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """
-        Fetch JSON data from API endpoint
-        
-        Args:
-            endpoint: API endpoint path
-            method: HTTP method (POST, GET)
-            data: Request payload
-            
-        Returns:
-            JSON response as dictionary
-        """
         self._apply_rate_limit()
         url = f"{BASE_URL}{endpoint}"
         self.logger.info(f"API call: {method} {url}")
@@ -107,5 +80,4 @@ class Fetcher:
         return response.json()
 
     def close(self):
-        """Close the session"""
         self.session.close()

@@ -1,6 +1,3 @@
-"""
-Main orchestrator that coordinates fetching, parsing, cleaning, and persistence
-"""
 from models.tender import Tender
 from models.run_metadata import RunMetadata
 from scraper.fetcher import Fetcher
@@ -15,7 +12,6 @@ from config.settings import (
 
 
 class Orchestrator:
-    """Coordinates the entire scraping workflow"""
 
     def __init__(
         self,
@@ -46,33 +42,27 @@ class Orchestrator:
         self.logger.info(f"Initialized scraper with limit={limit}, rate_limit={rate_limit}")
 
     def run(self):
-        """Execute the scraping workflow"""
         self.logger.info("=" * 60)
         self.logger.info(f"Starting scraper run: {self.metadata.run_id}")
         self.logger.info("=" * 60)
 
         try:
-            # Step 1: Fetch tender list page
             self.logger.info("Step 1: Fetching tender list...")
             html = self.fetcher.fetch_page(BASE_URL)
             self.metadata.pages_visited += 1
 
-            # Step 2: Parse tenders from HTML
             self.logger.info("Step 2: Parsing tenders from HTML...")
             raw_tenders = self.parser.parse_tender_list_from_html(html)
             
-            # WORKAROUND: If site is JS-rendered and returns 0 tenders, use mock data
             if len(raw_tenders) == 0:
                 self.logger.warning("Site returned 0 tenders (JS-rendered). Using mock data for POC.")
                 raw_tenders = self._generate_mock_tenders(self.limit)
             
             self.metadata.tenders_parsed = len(raw_tenders)
 
-            # Limit the number of tenders
             raw_tenders = raw_tenders[:self.limit]
             self.logger.info(f"Processing {len(raw_tenders)} tenders")
 
-            # Step 3: Clean and normalize tenders
             self.logger.info("Step 3: Cleaning and normalizing tender data...")
             cleaned_tenders = []
             tender_types_set = set()
@@ -90,13 +80,11 @@ class Orchestrator:
             self.metadata.tender_types_processed = list(tender_types_set)
             self.logger.info(f"Cleaned {len(cleaned_tenders)} tenders")
 
-            # Step 4: Persist tenders
             self.logger.info("Step 4: Persisting tender data...")
             saved_count = self.persister.save_tenders(cleaned_tenders)
             self.metadata.tenders_saved = saved_count
             self.metadata.deduped_count = len(cleaned_tenders) - saved_count
 
-            # Finish and save metadata
             self.metadata.finish()
             self.persister.save_run_metadata(self.metadata)
 
@@ -119,10 +107,6 @@ class Orchestrator:
             self.fetcher.close()
 
     def _generate_mock_tenders(self, count: int):
-        """
-        Generate mock tender data for POC demonstration
-        Note: In production, this would be replaced with actual API/Selenium scraping
-        """
         import random
         from datetime import datetime, timedelta
         
@@ -182,5 +166,4 @@ class Orchestrator:
         return mock_tenders
 
     def get_metadata(self) -> RunMetadata:
-        """Return the run metadata"""
         return self.metadata

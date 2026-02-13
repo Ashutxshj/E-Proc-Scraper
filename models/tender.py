@@ -1,6 +1,3 @@
-"""
-Tender data model
-"""
 from dataclasses import dataclass, asdict
 from typing import Optional, List
 from datetime import datetime
@@ -8,15 +5,12 @@ from datetime import datetime
 
 @dataclass
 class Tender:
-    """
-    Represents a tender entry with normalized fields
-    """
     tender_id: str
-    tender_type: str  # Goods | Works | Services
+    tender_type: str
     title: str
     organization: str
-    publish_date: str  # YYYY-MM-DD format
-    closing_date: Optional[str]  # YYYY-MM-DD format or null
+    publish_date: str 
+    closing_date: Optional[str]  
     description: str
     source_url: str
     attachments: List[str]
@@ -24,10 +18,8 @@ class Tender:
     ingested_at: Optional[str] = None
 
     def to_dict(self):
-        """Convert to dictionary"""
         return asdict(self)
 
     def __post_init__(self):
-        """Set ingestion timestamp"""
         if self.ingested_at is None:
             self.ingested_at = datetime.utcnow().isoformat()

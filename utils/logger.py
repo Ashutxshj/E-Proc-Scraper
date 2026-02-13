@@ -1,13 +1,8 @@
-"""
-Structured logging with run_id
-"""
 import logging
 import sys
 
 
 class RunLogger:
-    """Logger that includes run_id in all messages"""
-
     def __init__(self, run_id: str, name: str = "scraper"):
         self.run_id = run_id
         self.logger = logging.getLogger(name)

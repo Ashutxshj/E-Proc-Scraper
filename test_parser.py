@@ -1,12 +1,7 @@
-#!/usr/bin/env python3
-"""
-Quick debug script to see what the parser is finding
-"""
 import requests
 from bs4 import BeautifulSoup
 import urllib3
 
-# Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 print("Fetching tender.nprocure.com...")
@@ -18,11 +13,9 @@ print()
 
 soup = BeautifulSoup(html, 'lxml')
 
-# Check for tables
 tables = soup.find_all('table')
 print(f"Found {len(tables)} tables")
 
-# Check for DataTable specifically
 datatable = soup.find('table', {'class': 'dataTable'})
 if datatable:
     print("✓ Found DataTable!")
@@ -31,7 +24,6 @@ if datatable:
 else:
     print("⚠️  No DataTable found")
 
-# Check for tender links
 tender_links = soup.find_all('a', href=lambda x: x and '/tender/' in x)
 print(f"Found {len(tender_links)} tender links")
 
@@ -44,16 +36,13 @@ else:
     print("\n⚠️  No tender links found!")
     print("Checking if DataTable is empty...")
     
-    # Check if it's using DataTables (JavaScript-rendered)
     if 'dataTable' in html or 'DataTable' in html:
         print("⚠️  Site uses DataTables (JavaScript-rendered content)")
         print("⚠️  The table is probably empty on initial load")
         
-    # Check for Angular
     if 'ng-app' in html or 'angular' in html.lower():
         print("⚠️  Site uses AngularJS (JavaScript-rendered)")
         
-    # Look for tbody content
     tbody = soup.find('tbody')
     if tbody:
         print(f"Found tbody with {len(tbody.find_all('tr'))} rows")
